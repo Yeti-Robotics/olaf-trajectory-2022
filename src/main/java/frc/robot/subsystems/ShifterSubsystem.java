@@ -28,6 +28,7 @@ public class ShifterSubsystem extends SubsystemBase {
     shifter.set(DoubleSolenoid.Value.kForward);
     shiftStatus = ShiftStatus.HIGH;
   }
+  
   public void shiftDown() {
     shifter.set(DoubleSolenoid.Value.kReverse);
     shiftStatus = ShiftStatus.LOW;
