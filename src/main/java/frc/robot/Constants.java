@@ -32,7 +32,6 @@ public final class Constants {
     
         public static final double MAX_SPEED_INCHES_PER_SEC = 9.08 * 12.0;
         public static final double MAX_ACCEL_INCHES_PER_SEC2 = 7.5 * 12.0;
-      }
-    
+    }
 
 }
