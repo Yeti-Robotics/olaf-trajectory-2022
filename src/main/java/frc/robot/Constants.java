@@ -34,4 +34,7 @@ public final class Constants {
         public static final double MAX_ACCEL_INCHES_PER_SEC2 = 7.5 * 12.0;
     }
 
+    public static final class IOConstants {
+        public static final int DRIVER_STATION_JOY = 0;
+    }
 }

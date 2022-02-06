@@ -25,7 +25,7 @@ public class DriveTrainSubsystem extends SubsystemBase {
 
 
   public enum DriveMode{
-    Tank, Cheezy;
+    TANK, CHEEZY;
   }
 
   public DriveTrainSubsystem() {
@@ -41,7 +41,7 @@ public class DriveTrainSubsystem extends SubsystemBase {
     leftFalcon2.setInverted(InvertType.FollowMaster);
 
     drive = new DifferentialDrive(leftFalcon1, rightFalcon1);
-    drive.setDeadband(0.5);
+    drive.setDeadband(0.05);
   
     leftFalcon1.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor, 0, 0);
     rightFalcon1.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor, 0, 0);
@@ -51,7 +51,7 @@ public class DriveTrainSubsystem extends SubsystemBase {
 
     gyro = new PigeonIMU(13);
 
-    driveMode = DriveMode.Tank;
+    driveMode = DriveMode.TANK;
     
   }
 
