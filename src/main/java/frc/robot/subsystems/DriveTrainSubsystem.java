@@ -9,7 +9,12 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.sensors.PigeonIMU;
+import com.kauailabs.navx.frc.AHRS;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
@@ -18,9 +23,10 @@ public class DriveTrainSubsystem extends SubsystemBase {
   /** Creates a new DriveTrainSubsystem. */
 
   private WPI_TalonFX leftFalcon1, leftFalcon2, rightFalcon1, rightFalcon2;
-  private PigeonIMU gyro;
+  private AHRS gyro;
 
-  public final DifferentialDrive drive;
+  private final DifferentialDrive drive;
+  private final DifferentialDriveOdometry odometry;
   private DriveMode driveMode;
 
 
@@ -49,7 +55,8 @@ public class DriveTrainSubsystem extends SubsystemBase {
     rightFalcon1.setNeutralMode(NeutralMode.Brake);
     resetEncoders();
 
-    gyro = new PigeonIMU(13);
+    gyro = new AHRS(Port.kOnboard);
+    odometry = new DifferentialDriveOdometry(gyro.getRotation2d());
 
     driveMode = DriveMode.TANK;
     
@@ -57,7 +64,14 @@ public class DriveTrainSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
+    odometry.update(
+      gyro.getRotation2d(), getLeftEncoder(), getRightEncoder()
+      );
+  }
+
+  public void tankDriveVolts(double leftVolts, double rightVolts) {
+    leftFalcon1.setVoltage(leftVolts);
+    rightFalcon1.setVoltage(rightVolts);
   }
 
   public void tankDrive(double leftpower, double rightpower){
@@ -79,40 +93,60 @@ public class DriveTrainSubsystem extends SubsystemBase {
   public void resetEncoders(){
     leftFalcon1.setSelectedSensorPosition(0);
     rightFalcon1.setSelectedSensorPosition(0);
-  
   }
 
-  // public double getLeftEncoder() {
-  //   return (leftFalcon1.getSelectedSensorPosition() * (DriveConstants.DISTANCE_PER_PULSE)  / (ShiftingGearSubsystem.getShifterPosition() == ShiftingGearSubsystem.ShiftStatus.HIGH ? DriveConstants.HIGH_GEAR_RATIO : DriveConstants.LOW_GEAR_RATIO));
-  // }
+  public Pose2d getPose() {
+    return odometry.getPoseMeters();
+  }
 
-  // public double getRightEncoder() {
-  //   return (- rightFalcon1.getSelectedSensorPosition() * (DriveConstants.DISTANCE_PER_PULSE) / (ShiftingGearSubsystem.getShifterPosition() == ShiftingGearSubsystem.ShiftStatus.HIGH ? DriveConstants.HIGH_GEAR_RATIO : DriveConstants.LOW_GEAR_RATIO));
-  // }
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(getLeftEncoderRate(), getRightEncoderRate());
+  }
 
-  // public double getAverageEncoder(){
-  //   return ((getLeftEncoder()+getRightEncoder())/2);
-  // } use when ready
+  public void resetOdometry(Pose2d pose) {
+    odometry.resetPosition(pose, gyro.getRotation2d());
+  }
+
+  public double getLeftEncoder() {
+    return (leftFalcon1.getSelectedSensorPosition() * (DriveConstants.DISTANCE_PER_PULSE)  / (ShifterSubsystem.getShifterPosition() == ShifterSubsystem.ShiftStatus.HIGH ? DriveConstants.HIGH_GEAR_RATIO : DriveConstants.LOW_GEAR_RATIO));
+  }
+
+  public double getRightEncoder() {
+    return (- rightFalcon1.getSelectedSensorPosition() * (DriveConstants.DISTANCE_PER_PULSE) / (ShifterSubsystem.getShifterPosition() == ShifterSubsystem.ShiftStatus.HIGH ? DriveConstants.HIGH_GEAR_RATIO : DriveConstants.LOW_GEAR_RATIO));
+  }
+
+  public double getLeftEncoderRate() {
+    return leftFalcon1.getSelectedSensorVelocity();
+  }
+
+  public double getRightEncoderRate() {
+    return rightFalcon1.getSelectedSensorVelocity();
+  }
+
+  public double getAverageEncoder(){
+    return ((getLeftEncoder()+getRightEncoder())/2);
+  }
 
 
   public void setMaxOutput(double maxOutput){
     drive.setMaxOutput(maxOutput);
   }
 
-  public double getAngle(){
-    double [] ypr_deg = new double[3];
-    gyro.getYawPitchRoll(ypr_deg);
-    return ypr_deg[0];
+  public double getHeading() {
+    return gyro.getRotation2d().getDegrees();
   }
 
-  public void resetGyro(){
-    gyro.setYaw(0);
+  public void zeroHeading(){
+    gyro.reset();
   }
   
   public double getRawEncoder() {
     return leftFalcon1.getSelectedSensorPosition(); 
   }
 
+  public double getTurnRate() {
+    return gyro.getRate();
+  }
 
   public DriveMode getDriveMode(){
     return driveMode;

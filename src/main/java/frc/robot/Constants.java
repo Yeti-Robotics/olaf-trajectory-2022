@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -32,6 +34,33 @@ public final class Constants {
     
         public static final double MAX_SPEED_INCHES_PER_SEC = 9.08 * 12.0;
         public static final double MAX_ACCEL_INCHES_PER_SEC2 = 7.5 * 12.0;
+    }
+
+    public static final class AutoConstants {
+        //The KS Value on Sysid
+    public static final double ksVolts = 0.6068; // 0.60757 
+    //The Kv Value on Sysid
+    public static final double kvVoltSecondsPerMeters = 5.5037; // 5.5
+    //The Ka Value on Sysid
+    public static final double kaVoltSecondsSquaredPerMeter = 0.38133; // 0.36364
+
+    //The Kp Value on Sysid
+    public static final double kPDriveVel = 1.1; // 6.0628
+
+    // public static final double kTrackWidthInches = 21.5;
+    public static final double trackWidthMeters = 0.64992;
+
+    // converts desired linear & angular velocities to desired velocities 
+    // for the left & right sides of the drivetrain
+    public static final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(trackWidthMeters);
+
+    // Reasonable baseline values for a RAMSETE follower in units of meters and seconds - Might have to retouch if there is error
+    public static final double kRamseteB = 2.0; //78.7402;
+    public static final double kRamseteZeta = 0.7;
+
+    // note: copy pasted directly
+    public static final double kMaxSpeedMetersPerSecond = 3.0;
+    public static final double kMaxAccelerationMetersPerSecondSquared = 3.0;
     }
 
     public static final class IOConstants {
