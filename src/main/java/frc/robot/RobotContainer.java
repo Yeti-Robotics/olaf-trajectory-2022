@@ -4,15 +4,28 @@
 
 package frc.robot;
 
-import frc.robot.subsystems.DriveTrainSubsystem;
-import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import frc.robot.Constants.IOConstants;
+import java.util.List;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.commands.drivetrain.ToggleShiftingCommand;
+import frc.robot.subsystems.DriveTrainSubsystem;
+import edu.wpi.first.wpilibj.GenericHID;
 import frc.robot.subsystems.ShifterSubsystem;
 
 /**
@@ -26,26 +39,25 @@ import frc.robot.subsystems.ShifterSubsystem;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
+  private final DriveTrainSubsystem driveTrainSubsystem  = new DriveTrainSubsystem();
   public Joystick driverStationJoystick;
-
-  public ShifterSubsystem shifterSubsystem;
-  private final DriveTrainSubsystem drivetrainSubsystem;
+  public ShifterSubsystem shifterSubsystem = new ShifterSubsystem();
 
   public RobotContainer() {
-    driverStationJoystick = new Joystick(IOConstants.DRIVER_STATION_JOY);
-    shifterSubsystem = new ShifterSubsystem();
-    drivetrainSubsystem = new DriveTrainSubsystem();
+    // Configure the button bindings
+    driverStationJoystick = new Joystick(0);
 
-    switch (drivetrainSubsystem.getDriveMode()) {
+    switch (driveTrainSubsystem.getDriveMode()) {
       case TANK:
-        drivetrainSubsystem.setDefaultCommand(
-            new RunCommand(() -> drivetrainSubsystem.tankDrive(getLeftY(), getRightY()), drivetrainSubsystem));
+        driveTrainSubsystem.setDefaultCommand(
+            new RunCommand(() -> driveTrainSubsystem.tankDrive(getLeftY(), getRightY()), driveTrainSubsystem));
         break;
       case CHEEZY:
-        drivetrainSubsystem.setDefaultCommand(
-            new RunCommand(() -> drivetrainSubsystem.cheezyDrive(getLeftY(), getRightX()), drivetrainSubsystem));
+        driveTrainSubsystem.setDefaultCommand(
+            new RunCommand(() -> driveTrainSubsystem.cheezyDrive(getLeftY(), getRightX()), driveTrainSubsystem));
         break;
     }
+
 
     configureButtonBindings();
   }
@@ -59,28 +71,77 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    setJoystickButtonWhenPressed(driverStationJoystick, 12, new ToggleShiftingCommand(shifterSubsystem, drivetrainSubsystem));
+    setJoystickButtonWhenPressed(driverStationJoystick, 12, new ToggleShiftingCommand(shifterSubsystem, driveTrainSubsystem));
   }
 
-  private double getLeftY() {
+
+  private double getLeftY(){
     return -driverStationJoystick.getRawAxis(0);
   }
 
-  private double getRightY() {
+  private double getRightY(){
     return -driverStationJoystick.getRawAxis(2);
   }
 
-  private double getRightX() {
+  private double getRightX(){
     return driverStationJoystick.getRawAxis(3);
   }
 
   private void setJoystickButtonWhenPressed(Joystick joystick, int button, CommandBase command) {
     new JoystickButton(joystick, button).whenPressed(command);
   }
-  /*
-   * public Command getAutonomousCommand() {
-   * // An ExampleCommand will run in autonomous
-   * return m_autoCommand;
-   * }
+
+
+  /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
    */
+   public Command getAutonomousCommand() {
+    // An ExampleCommand will run in autonomous
+    var autoVoltageConstraint =
+      new DifferentialDriveVoltageConstraint(
+        new SimpleMotorFeedforward(
+          AutoConstants.ksVolts, 
+          AutoConstants.kvVoltSecondsPerMeters,
+          AutoConstants.kaVoltSecondsSquaredPerMeter),
+          AutoConstants.kinematics,
+          10);
+
+    TrajectoryConfig config =
+      new TrajectoryConfig(
+        AutoConstants.kMaxSpeedMetersPerSecond,
+        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
+        .setKinematics(AutoConstants.kinematics)
+        .addConstraint(autoVoltageConstraint);
+
+    // s curve 
+    Trajectory exampleTrajectory =
+    TrajectoryGenerator.generateTrajectory(
+      new Pose2d(0, 0, new Rotation2d(0)),
+      List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
+      new Pose2d(3, 0, new Rotation2d(0)),
+      config);
+
+    RamseteCommand ramseteCommand = 
+      new RamseteCommand(
+        exampleTrajectory,
+       driveTrainSubsystem::getPose,
+       new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
+       new SimpleMotorFeedforward(
+         AutoConstants.ksVolts,
+         AutoConstants.kvVoltSecondsPerMeters,
+         AutoConstants.kaVoltSecondsSquaredPerMeter),
+      AutoConstants.kinematics,
+      driveTrainSubsystem::getWheelSpeeds,
+      new PIDController(AutoConstants.kPDriveVel, 0, 0),
+      new PIDController(AutoConstants.kPDriveVel, 0, 0),
+      driveTrainSubsystem::tankDriveVolts,
+      driveTrainSubsystem);
+
+  driveTrainSubsystem.resetOdometry(exampleTrajectory.getInitialPose());
+
+  return ramseteCommand.andThen(() -> driveTrainSubsystem.tankDriveVolts(0, 0));
+}
+  
 }

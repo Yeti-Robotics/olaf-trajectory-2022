@@ -61,6 +61,7 @@ public final class Constants {
     // note: copy pasted directly
     public static final double kMaxSpeedMetersPerSecond = 3.0;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3.0;
+    
     }
 
     public static final class IOConstants {
