@@ -45,7 +45,7 @@ public final class Constants {
     public static final double kaVoltSecondsSquaredPerMeter = 0.38133; // 0.36364
 
     //The Kp Value on Sysid
-    public static final double kPDriveVel = 1.1; // 6.0628
+    public static final double kPDriveVel = 6.0628; // 6.0628 (1.1)
 
     // public static final double kTrackWidthInches = 21.5;
     public static final double trackWidthMeters = 0.64992;
@@ -59,9 +59,8 @@ public final class Constants {
     public static final double kRamseteZeta = 0.7;
 
     // note: copy pasted directly
-    public static final double kMaxSpeedMetersPerSecond = 3.0;
-    public static final double kMaxAccelerationMetersPerSecondSquared = 3.0;
-    
+    public static final double kMaxSpeedMetersPerSecond = 2.0;
+    public static final double kMaxAccelerationMetersPerSecondSquared = 2.0;
     }
 
     public static final class IOConstants {

@@ -39,7 +39,7 @@ import frc.robot.subsystems.ShifterSubsystem;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  private final DriveTrainSubsystem driveTrainSubsystem  = new DriveTrainSubsystem();
+  private final DriveTrainSubsystem driveTrainSubsystem = new DriveTrainSubsystem();
   public Joystick driverStationJoystick;
   public ShifterSubsystem shifterSubsystem = new ShifterSubsystem();
 
@@ -58,7 +58,6 @@ public class RobotContainer {
         break;
     }
 
-
     configureButtonBindings();
   }
 
@@ -71,19 +70,19 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    setJoystickButtonWhenPressed(driverStationJoystick, 12, new ToggleShiftingCommand(shifterSubsystem, driveTrainSubsystem));
+    setJoystickButtonWhenPressed(driverStationJoystick, 11,
+        new ToggleShiftingCommand(shifterSubsystem, driveTrainSubsystem));
   }
 
-
-  private double getLeftY(){
+  private double getLeftY() {
     return -driverStationJoystick.getRawAxis(0);
   }
 
-  private double getRightY(){
+  private double getRightY() {
     return -driverStationJoystick.getRawAxis(2);
   }
 
-  private double getRightX(){
+  private double getRightX() {
     return driverStationJoystick.getRawAxis(3);
   }
 
@@ -91,57 +90,58 @@ public class RobotContainer {
     new JoystickButton(joystick, button).whenPressed(command);
   }
 
-
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
    */
-   public Command getAutonomousCommand() {
-    // An ExampleCommand will run in autonomous
-    var autoVoltageConstraint =
-      new DifferentialDriveVoltageConstraint(
+  public Command getAutonomousCommand() {
+    // Create a voltage constraint to ensure we don't accelerate too fast
+    var autoVoltageConstraint = new DifferentialDriveVoltageConstraint(
         new SimpleMotorFeedforward(
-          AutoConstants.ksVolts, 
-          AutoConstants.kvVoltSecondsPerMeters,
-          AutoConstants.kaVoltSecondsSquaredPerMeter),
-          AutoConstants.kinematics,
-          10);
+            AutoConstants.ksVolts,
+            AutoConstants.kvVoltSecondsPerMeters,
+            AutoConstants.kaVoltSecondsSquaredPerMeter),
+        AutoConstants.kinematics,
+        10);
 
-    TrajectoryConfig config =
-      new TrajectoryConfig(
+    // Create config for trajectory
+    TrajectoryConfig config = new TrajectoryConfig(
         AutoConstants.kMaxSpeedMetersPerSecond,
         AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-        .setKinematics(AutoConstants.kinematics)
-        .addConstraint(autoVoltageConstraint);
+            // Add kinematics to ensure max speed is actually obeyed
+            .setKinematics(AutoConstants.kinematics)
+            // Apply the voltage constraint
+            .addConstraint(autoVoltageConstraint);
 
-    // s curve 
-    Trajectory exampleTrajectory =
-    TrajectoryGenerator.generateTrajectory(
-      new Pose2d(0, 0, new Rotation2d(0)),
-      List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
-      new Pose2d(3, 0, new Rotation2d(0)),
-      config);
+    // An example trajectory to follow. All units in meters.
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(0, 0, new Rotation2d(0)),
+        List.of(new Translation2d(1, 0), new Translation2d(2, 0)),
+        new Pose2d(3, 0, new Rotation2d(0)),
+        // Pass config
+        config);
 
-    RamseteCommand ramseteCommand = 
-      new RamseteCommand(
+    RamseteCommand ramseteCommand = new RamseteCommand(
         exampleTrajectory,
-       driveTrainSubsystem::getPose,
-       new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
-       new SimpleMotorFeedforward(
-         AutoConstants.ksVolts,
-         AutoConstants.kvVoltSecondsPerMeters,
-         AutoConstants.kaVoltSecondsSquaredPerMeter),
-      AutoConstants.kinematics,
-      driveTrainSubsystem::getWheelSpeeds,
-      new PIDController(AutoConstants.kPDriveVel, 0, 0),
-      new PIDController(AutoConstants.kPDriveVel, 0, 0),
-      driveTrainSubsystem::tankDriveVolts,
-      driveTrainSubsystem);
+        driveTrainSubsystem::getPose,
+        new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
+        new SimpleMotorFeedforward(
+            AutoConstants.ksVolts,
+            AutoConstants.kvVoltSecondsPerMeters,
+            AutoConstants.kaVoltSecondsSquaredPerMeter),
+        AutoConstants.kinematics,
+        driveTrainSubsystem::getWheelSpeeds,
+        new PIDController(AutoConstants.kPDriveVel, 0, 0),
+        new PIDController(AutoConstants.kPDriveVel, 0, 0),
+        // RamseteCommand passes volts to the callback
+        driveTrainSubsystem::tankDriveVolts,
+        driveTrainSubsystem);
 
-  driveTrainSubsystem.resetOdometry(exampleTrajectory.getInitialPose());
-
-  return ramseteCommand.andThen(() -> driveTrainSubsystem.tankDriveVolts(0, 0));
-}
+    // Reset odometry to the starting pose of the trajectory.
+    driveTrainSubsystem.resetOdometry(exampleTrajectory.getInitialPose());
+    // Run path following command, then stop at the end.
+    return ramseteCommand.andThen(() -> driveTrainSubsystem.tankDriveVolts(0, 0));
+  }
   
 }
