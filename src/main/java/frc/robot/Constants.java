@@ -18,9 +18,9 @@ public final class Constants {
 
     public static final class DriveConstants {
         public static final int LEFT_FALCON_1 = 1;
-        public static final int LEFT_FALCON_2 = 2;
+        public static final int LEFT_FALCON_2 = 4;
         public static final int RIGHT_FALCON_1 = 3;
-        public static final int RIGHT_FALCON_2 = 4;
+        public static final int RIGHT_FALCON_2 = 2;
     
         public static final double WHEEL_DIAMETER = 3.875; //in
         public static final double WHEEL_RADIUS = WHEEL_DIAMETER / 2.0;
@@ -32,8 +32,8 @@ public final class Constants {
         public static final int[] SHIFTER_SOLENOID = {1,6}; 
         public static final int GYRO_ID = 13;
     
-        public static final double MAX_SPEED_INCHES_PER_SEC = 9.08 * 12.0;
-        public static final double MAX_ACCEL_INCHES_PER_SEC2 = 7.5 * 12.0;
+        // public static final double MAX_SPEED_INCHES_PER_SEC = 9.08 * 12.0;
+        // public static final double MAX_ACCEL_INCHES_PER_SEC2 = 7.5 * 12.0;
     }
 
     public static final class AutoConstants {
@@ -45,9 +45,9 @@ public final class Constants {
     public static final double kaVoltSecondsSquaredPerMeter = 0.38133; // 0.36364
 
     //The Kp Value on Sysid
-    public static final double kPDriveVel = 6.0628; // 6.0628 (1.1)
-
-    // public static final double kTrackWidthInches = 21.5;
+    public static final double kPDriveVel = 1.3756; //6.0628  1.1 (most recent)(WPILIB had theirs at 8.5 in the docs)
+            
+    // publi    c static final double kTrackWidthInches = 21.5;
     public static final double trackWidthMeters = 0.64992;
 
     // converts desired linear & angular velocities to desired velocities 
