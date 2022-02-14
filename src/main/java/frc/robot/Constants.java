@@ -22,7 +22,7 @@ public final class Constants {
         public static final int RIGHT_FALCON_1 = 3;
         public static final int RIGHT_FALCON_2 = 2;
     
-        public static final double WHEEL_DIAMETER = 3.875; //in
+        public static final double WHEEL_DIAMETER = 0.098425; //in
         public static final double WHEEL_RADIUS = WHEEL_DIAMETER / 2.0;
     
         public static final double HIGH_GEAR_RATIO = 6.86; //jvn  //5.533243;// fudge values
@@ -45,9 +45,9 @@ public final class Constants {
     public static final double kaVoltSecondsSquaredPerMeter = 0.38133; // 0.36364
 
     //The Kp Value on Sysid
-    public static final double kPDriveVel = 1.3756; //6.0628  1.1 (most recent)(WPILIB had theirs at 8.5 in the docs)
-            
-    // publi    c static final double kTrackWidthInches = 21.5;
+    public static final double kPDriveVel = 0.55; // 6.0628 (1.1)
+
+    // public static final double kTrackWidthInches = 21.5;
     public static final double trackWidthMeters = 0.64992;
 
     // converts desired linear & angular velocities to desired velocities 

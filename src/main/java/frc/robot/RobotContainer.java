@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import java.util.List;
 import frc.robot.Constants.AutoConstants;
+import frc.robot.commands.drivetrain.TestVelocityCommand;
 import frc.robot.commands.drivetrain.ToggleShiftingCommand;
 import frc.robot.subsystems.DriveTrainSubsystem;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -39,7 +40,7 @@ import frc.robot.subsystems.ShifterSubsystem;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  private final DriveTrainSubsystem driveTrainSubsystem = new DriveTrainSubsystem();
+  public final DriveTrainSubsystem driveTrainSubsystem = new DriveTrainSubsystem();
   public Joystick driverStationJoystick;
   public ShifterSubsystem shifterSubsystem = new ShifterSubsystem();
 
@@ -72,6 +73,9 @@ public class RobotContainer {
   private void configureButtonBindings() {
     setJoystickButtonWhenPressed(driverStationJoystick, 11,
         new ToggleShiftingCommand(shifterSubsystem, driveTrainSubsystem));
+    
+    setJoystickButtonWhileHeld(driverStationJoystick, 6, 
+        new TestVelocityCommand(driveTrainSubsystem));
   }
 
   private double getLeftY() {
@@ -90,6 +94,9 @@ public class RobotContainer {
     new JoystickButton(joystick, button).whenPressed(command);
   }
 
+  private void setJoystickButtonWhileHeld(Joystick joystick, int button, CommandBase command) {
+    new JoystickButton(joystick, button).whileHeld(command);
+  }
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
@@ -115,15 +122,22 @@ public class RobotContainer {
             .addConstraint(autoVoltageConstraint);
 
     // An example trajectory to follow. All units in meters.
-    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(0, 0, new Rotation2d(0)),
-        List.of(new Translation2d(1, 0), new Translation2d(2, 0)),
-        new Pose2d(3, 0, new Rotation2d(0)),
-        // Pass config
-        config);
+    // Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
+    //     // Start at the origin facing the +X direction
+    //     new Pose2d(0, 0, new Rotation2d(0)),
+    //     // Pass through these two interior waypoints, making an 's' curve path
+    //     List.of(
+    //         new Translation2d(1, 0),
+    //         new Translation2d(2, 0)),
+    //     // End 3 meters straight ahead of where we started, facing forward
+    //     new Pose2d(3, 0, new Rotation2d(0)),
+    //     // Pass config
+    //     config);
+
+    Trajectory customTrajectory = Robot.trajectory;
 
     RamseteCommand ramseteCommand = new RamseteCommand(
-        exampleTrajectory,
+        customTrajectory,
         driveTrainSubsystem::getPose,
         new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
         new SimpleMotorFeedforward(
@@ -139,9 +153,9 @@ public class RobotContainer {
         driveTrainSubsystem);
 
     // Reset odometry to the starting pose of the trajectory.
-    driveTrainSubsystem.resetOdometry(exampleTrajectory.getInitialPose());
+    driveTrainSubsystem.resetOdometry(customTrajectory.getInitialPose());
     // Run path following command, then stop at the end.
     return ramseteCommand.andThen(() -> driveTrainSubsystem.tankDriveVolts(0, 0));
   }
-  
+
 }

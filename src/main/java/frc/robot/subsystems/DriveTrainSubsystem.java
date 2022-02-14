@@ -4,8 +4,11 @@
 
 package frc.robot.subsystems;
 
+import java.util.ResourceBundle.Control;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
@@ -41,37 +44,50 @@ public class DriveTrainSubsystem extends SubsystemBase {
     rightFalcon1 = new WPI_TalonFX(DriveConstants.RIGHT_FALCON_1);
     rightFalcon2 = new WPI_TalonFX(DriveConstants.RIGHT_FALCON_2);
 
-    leftMotors = new MotorControllerGroup(leftFalcon2, leftFalcon1);
-    rightMotors = new MotorControllerGroup(rightFalcon1, rightFalcon2);
+    rightFalcon1.setInverted(true);
 
-    rightMotors.setInverted(true);
+    leftFalcon2.follow(leftFalcon1);
+    leftFalcon2.setInverted(InvertType.FollowMaster);
+    rightFalcon2.follow(rightFalcon1);
+    rightFalcon2.setInverted(InvertType.FollowMaster);
 
-    drive = new DifferentialDrive(leftMotors, rightMotors);
+    // leftMotors = new MotorControllerGroup(leftFalcon1, leftFalcon2);
+    // rightMotors = new MotorControllerGroup(rightFalcon1, rightFalcon2);
+
+    // rightMotors.setInverted(true);
+
+    drive = new DifferentialDrive(leftFalcon1, rightFalcon1);
     drive.setDeadband(0.05);
 
     leftFalcon1.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor, 0, 0);
     rightFalcon1.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor, 0, 0);
     leftFalcon1.setNeutralMode(NeutralMode.Brake);
+    leftFalcon2.setNeutralMode(NeutralMode.Brake);
     rightFalcon1.setNeutralMode(NeutralMode.Brake);
+    rightFalcon2.setNeutralMode(NeutralMode.Brake);
     resetEncoders();
 
     gyro = new AHRS(Port.kOnboard);
+    zeroHeading();
+    
     odometry = new DifferentialDriveOdometry(gyro.getRotation2d());
 
-    driveMode = DriveMode.TANK;
+    driveMode = DriveMode.CHEEZY;
   }
 
   @Override
   public void periodic() {
     odometry.update(
         gyro.getRotation2d(), getLeftEncoder(), getRightEncoder());
+
+    System.out.printf("GYRO: %f \n LEFT ENCODER: %f \n RIGHT ENCODER: %f \n LEFT ENCODER VELOCITY: %f \n", gyro.getRotation2d().getDegrees(), getLeftEncoder(), getRightEncoder(), getLeftEncoderRate());
   }
 
   public void tankDriveVolts(double leftVolts, double rightVolts) {
-    System.out.println("LEFT VOLTS: " + leftVolts);
-    System.out.println("RIGHT VOLTS: " + rightVolts);
-    leftMotors.setVoltage(leftVolts);
-    rightMotors.setVoltage(rightVolts);
+    // System.out.println("LEFT VOLTS: " + leftVolts);
+    // System.out.println("RIGHT VOLTS: " + rightVolts);
+    leftFalcon1.setVoltage(Math.abs(leftVolts));
+    rightFalcon1.setVoltage(Math.abs(rightVolts));
     drive.feed();
   }
 
@@ -84,8 +100,8 @@ public class DriveTrainSubsystem extends SubsystemBase {
   }
 
   public void stopDrive() {
-    leftMotors.set(0);
-    rightMotors.set(0);
+    leftFalcon1.set(ControlMode.PercentOutput, 0);
+    rightFalcon1.set(ControlMode.PercentOutput, 0);
   }
 
   public void resetEncoders() {
@@ -102,6 +118,7 @@ public class DriveTrainSubsystem extends SubsystemBase {
   }
 
   public void resetOdometry(Pose2d pose) {
+    resetEncoders();
     odometry.resetPosition(pose, gyro.getRotation2d());
   }
 
@@ -112,17 +129,21 @@ public class DriveTrainSubsystem extends SubsystemBase {
   }
 
   public double getRightEncoder() {
-    return (-rightFalcon1.getSelectedSensorPosition() * (DriveConstants.DISTANCE_PER_PULSE)
+    return (rightFalcon1.getSelectedSensorPosition() * (DriveConstants.DISTANCE_PER_PULSE)
         / (ShifterSubsystem.getShifterPosition() == ShifterSubsystem.ShiftStatus.HIGH ? DriveConstants.HIGH_GEAR_RATIO
             : DriveConstants.LOW_GEAR_RATIO));
   }
 
   public double getLeftEncoderRate() {
-    return leftFalcon1.getSelectedSensorVelocity();
+    return (leftFalcon1.getSelectedSensorVelocity() * (DriveConstants.DISTANCE_PER_PULSE) * 10
+    / (ShifterSubsystem.getShifterPosition() == ShifterSubsystem.ShiftStatus.HIGH ? DriveConstants.HIGH_GEAR_RATIO
+        : DriveConstants.LOW_GEAR_RATIO));
   }
 
   public double getRightEncoderRate() {
-    return rightFalcon1.getSelectedSensorVelocity();
+    return (rightFalcon1.getSelectedSensorVelocity() * (DriveConstants.DISTANCE_PER_PULSE) * 10
+    / (ShifterSubsystem.getShifterPosition() == ShifterSubsystem.ShiftStatus.HIGH ? DriveConstants.HIGH_GEAR_RATIO
+        : DriveConstants.LOW_GEAR_RATIO));
   }
 
   public double getAverageEncoder() {
