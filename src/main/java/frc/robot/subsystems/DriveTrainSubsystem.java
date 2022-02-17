@@ -4,8 +4,6 @@
 
 package frc.robot.subsystems;
 
-import java.util.ResourceBundle.Control;
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.InvertType;
@@ -18,7 +16,6 @@ import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
 
@@ -26,8 +23,6 @@ public class DriveTrainSubsystem extends SubsystemBase {
   /** Creates a new DriveTrainSubsystem. */
 
   private WPI_TalonFX leftFalcon1, leftFalcon2, rightFalcon1, rightFalcon2;
-  private MotorControllerGroup leftMotors;
-  private MotorControllerGroup rightMotors;
 
   private final DifferentialDrive drive;
   private final DifferentialDriveOdometry odometry;
@@ -80,14 +75,14 @@ public class DriveTrainSubsystem extends SubsystemBase {
     odometry.update(
         gyro.getRotation2d(), getLeftEncoder(), getRightEncoder());
 
-    System.out.printf("GYRO: %f \n LEFT ENCODER: %f \n RIGHT ENCODER: %f \n LEFT ENCODER VELOCITY: %f \n", gyro.getRotation2d().getDegrees(), getLeftEncoder(), getRightEncoder(), getLeftEncoderRate());
+    // System.out.printf("GYRO: %f \n LEFT ENCODER: %f \n RIGHT ENCODER: %f \n LEFT ENCODER VELOCITY: %f \n", gyro.getRotation2d().getDegrees(), getLeftEncoder(), getRightEncoder(), getLeftEncoderRate());
   }
 
   public void tankDriveVolts(double leftVolts, double rightVolts) {
     // System.out.println("LEFT VOLTS: " + leftVolts);
     // System.out.println("RIGHT VOLTS: " + rightVolts);
-    leftFalcon1.setVoltage(Math.abs(leftVolts));
-    rightFalcon1.setVoltage(Math.abs(rightVolts));
+    leftFalcon1.setVoltage(leftVolts);
+    rightFalcon1.setVoltage(rightVolts);
     drive.feed();
   }
 
@@ -102,24 +97,6 @@ public class DriveTrainSubsystem extends SubsystemBase {
   public void stopDrive() {
     leftFalcon1.set(ControlMode.PercentOutput, 0);
     rightFalcon1.set(ControlMode.PercentOutput, 0);
-  }
-
-  public void resetEncoders() {
-    leftFalcon1.setSelectedSensorPosition(0);
-    rightFalcon1.setSelectedSensorPosition(0);
-  }
-
-  public Pose2d getPose() {
-    return odometry.getPoseMeters();
-  }
-
-  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
-    return new DifferentialDriveWheelSpeeds(getLeftEncoderRate(), getRightEncoderRate());
-  }
-
-  public void resetOdometry(Pose2d pose) {
-    resetEncoders();
-    odometry.resetPosition(pose, gyro.getRotation2d());
   }
 
   public double getLeftEncoder() {
@@ -148,6 +125,24 @@ public class DriveTrainSubsystem extends SubsystemBase {
 
   public double getAverageEncoder() {
     return ((getLeftEncoder() + getRightEncoder()) / 2);
+  }
+
+  public void resetEncoders() {
+    leftFalcon1.setSelectedSensorPosition(0);
+    rightFalcon1.setSelectedSensorPosition(0);
+  }
+
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(getLeftEncoderRate(), getRightEncoderRate());
+  }
+
+  public Pose2d getPose() {
+    return odometry.getPoseMeters();
+  }
+
+  public void resetOdometry(Pose2d pose) {
+    resetEncoders();
+    odometry.resetPosition(pose, gyro.getRotation2d());
   }
 
   public void setMaxOutput(double maxOutput) {

@@ -26,7 +26,7 @@ public class Robot extends TimedRobot {
 
   private RobotContainer robotContainer;
 
-  String trajectoryJSON = "paths/S_curve.wpilib.json";
+  String trajectoryJSON = "paths/curvingCurve.wpilib.json";
   public static Trajectory trajectory = new Trajectory();
   /**
    * This function is run when the robot is first started up and should be used for any
